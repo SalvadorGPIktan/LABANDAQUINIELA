@@ -1,0 +1,8 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {outcome,closed,complete,standings,winners,escapeHtml} from '../docs/core.mjs';
+test('solo partidos terminados generan puntos',()=>{assert.equal(outcome({status:'live',home_score:3,away_score:0}),null);assert.equal(outcome({status:'finished',home_score:3,away_score:0}),'L');assert.equal(outcome({status:'finished',home_score:0,away_score:0}),'E');assert.equal(outcome({status:'finished',home_score:0,away_score:3}),'V');assert.equal(outcome({status:'finished',home_score:null,away_score:null}),null)});
+test('cierre inclusivo con zona horaria; sirve entre semana',()=>{const r={deadline:'2026-09-22T19:00:00-06:00'};assert.equal(closed(r,Date.parse('2026-09-23T00:59:59Z')),false);assert.equal(closed(r,Date.parse('2026-09-23T01:00:00Z')),true)});
+test('pospuestos bloquean cierre; anulados no',()=>{assert.equal(complete([]),false);assert.equal(complete([{status:'finished'},{status:'postponed'}]),false);assert.equal(complete([{status:'finished'},{status:'cancelled'}]),true)});
+test('ganadores compartidos, sin asignar puntos a anulados',()=>{const ms=[{id:'a',status:'finished',home_score:1,away_score:0},{id:'b',status:'cancelled'}];const p=[{id:'u',name:'Ana'},{id:'v',name:'Luis'},{id:'w',name:'Sin quiniela'}];const picks=[{user_id:'u',match_id:'a',choice:'L'},{user_id:'v',match_id:'a',choice:'L'},{user_id:'u',match_id:'b',choice:'E'}];const rows=standings(p,picks,ms);assert.equal(rows.length,2);assert.equal(rows[0].points,1);assert.equal(winners(rows).length,2)});
+test('nombres no inyectan HTML',()=>assert.equal(escapeHtml('<img onerror="x">'),'&lt;img onerror=&quot;x&quot;&gt;'));

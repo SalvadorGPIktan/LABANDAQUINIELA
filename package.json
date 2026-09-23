@@ -1,0 +1,13 @@
+{
+  "name": "la-banda-quiniela",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/core.test.mjs",
+    "test:integration": "node tests/security.cjs && node tests/interface.cjs"
+  },
+  "devDependencies": {
+    "linkedom": "0.18.13",
+    "@electric-sql/pglite": "0.5.8"
+  }
+}
