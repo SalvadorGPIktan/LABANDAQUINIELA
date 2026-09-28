@@ -895,11 +895,8 @@ function jornada(
         </h1>
 
         <p>
-          Un grupo de amigos.
-          Una jornada.
-          Mil razones para presumir.
-          Haz tus pronósticos
-          y que hable la cancha.
+          Que gane el mejor.
+          Se habla en la cancha.
         </p>
 
         <span class="pill">
