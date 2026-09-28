@@ -32,7 +32,7 @@ def main():
     print("=== TEMPORADA ACTUAL ===")
     print(json.dumps(season, indent=2, ensure_ascii=False))
 
-    season_id = season["id"]
+    season_id = season["season"]["id"]
 
     # 2. Obtener próximos partidos
     events = get(
