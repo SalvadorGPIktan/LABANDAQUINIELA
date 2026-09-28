@@ -1,34 +1,113 @@
-"""Sincroniza SOLO fixtures registrados. Secretos en entorno, nunca en docs/."""
-import os, json, urllib.request, urllib.parse
-BASE='https://v3.football.api-sports.io'
+"""Sincroniza resultados de los partidos registrados usando BSD."""
+import os
+import json
+import urllib.request
+
+BSD_BASE = "https://sports.bzzoiro.com/api/v2"
+
+
 def request(url, headers, body=None):
-    req=urllib.request.Request(url,headers=headers,data=None if body is None else json.dumps(body).encode())
+    data = None if body is None else json.dumps(body).encode()
+
+    req = urllib.request.Request(
+        url,
+        headers=headers,
+        data=data,
+    )
+
     with urllib.request.urlopen(req, timeout=40) as response:
         return json.load(response)
+
+
 def normalize(item):
-    short=item['fixture']['status']['short']
-    status={'FT':'finished','AET':'finished','PEN':'finished','CANC':'cancelled','PST':'postponed','SUSP':'postponed','INT':'postponed','ABD':'postponed','NS':'scheduled','TBD':'scheduled','1H':'live','HT':'live','2H':'live','ET':'live','BT':'live','P':'live'}.get(short)
-    if status is None: return None # WO/AWD requieren resolución manual, no adivinar.
-    score=item['score']['fulltime'] if status=='finished' else item['goals']
-    home,away=score.get('home'),score.get('away')
-    if status=='finished' and (home is None or away is None): return None
-    return {'p_status':status,'p_home':home,'p_away':away,'p_kickoff':item['fixture']['date']}
+    status_map = {
+        "upcoming": "scheduled",
+        "live": "live",
+        "finished": "finished",
+        "cancelled": "cancelled",
+        "postponed": "postponed",
+    }
+
+    status = status_map.get(item.get("status"))
+
+    # BSD puede marcar unresolved cuando no puede confirmar qué pasó.
+    # No adivinamos ese caso.
+    if status is None:
+        return None
+
+    home = item.get("home_score")
+    away = item.get("away_score")
+
+    if status == "finished" and (home is None or away is None):
+        return None
+
+    return {
+        "p_status": status,
+        "p_home": home,
+        "p_away": away,
+        "p_kickoff": item["event_date"],
+    }
+
+
 def main():
-    url=os.environ['SUPABASE_URL'].rstrip('/')+'/rest/v1/'
-    key=os.environ['SUPABASE_SERVICE_ROLE_KEY']
-    headers={'apikey':key,'Authorization':'Bearer '+key,'Content-Type':'application/json'}
-    matches=request(url+'matches?select=id,provider_id&provider_id=not.is.null&manual_override=eq.false&status=in.(scheduled,live,postponed)',headers)
-    mapped={m['provider_id']:m['id'] for m in matches}
-    ids=list(mapped)
-    count=0
-    for start in range(0,len(ids),20):
-        query=urllib.parse.urlencode({'ids':'-'.join(map(str,ids[start:start+20]))})
-        result=request(BASE+'/fixtures?'+query,{'x-apisports-key':os.environ['API_FOOTBALL_KEY']})
-        if result.get('errors'): raise RuntimeError('API-Football rechazó la consulta; revisa cuota y plan en el proveedor.')
-        for item in result.get('response',[]):
-            update=normalize(item)
-            if update is not None and item['fixture']['id'] in mapped:
-                request(url+'rpc/sync_result',headers,{'p_id':mapped[item['fixture']['id']],**update})
-                count+=1
-    print(f'{count} encuentros sincronizados. {len(ids)} IDs configurados.')
-if __name__=='__main__': main()
+    supabase_url = os.environ["SUPABASE_URL"].rstrip("/") + "/rest/v1/"
+    supabase_key = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
+    bsd_key = os.environ["BSD_API_KEY"]
+
+    supabase_headers = {
+        "apikey": supabase_key,
+        "Authorization": "Bearer " + supabase_key,
+        "Content-Type": "application/json",
+    }
+
+    bsd_headers = {
+        "Authorization": "Token " + bsd_key,
+        "Accept": "application/json",
+    }
+
+    matches = request(
+        supabase_url
+        + "matches?select=id,provider_id"
+        + "&provider_id=not.is.null"
+        + "&manual_override=eq.false"
+        + "&status=in.(scheduled,live,postponed)",
+        supabase_headers,
+    )
+
+    updated = 0
+    skipped = 0
+
+    for match in matches:
+        provider_id = match["provider_id"]
+
+        item = request(
+            f"{BSD_BASE}/events/{provider_id}/",
+            bsd_headers,
+        )
+
+        update = normalize(item)
+
+        if update is None:
+            skipped += 1
+            continue
+
+        request(
+            supabase_url + "rpc/sync_result",
+            supabase_headers,
+            {
+                "p_id": match["id"],
+                **update,
+            },
+        )
+
+        updated += 1
+
+    print(
+        f"{updated} encuentros sincronizados. "
+        f"{skipped} omitidos. "
+        f"{len(matches)} partidos pendientes consultados."
+    )
+
+
+if __name__ == "__main__":
+    main()
