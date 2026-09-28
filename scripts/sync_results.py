@@ -22,6 +22,8 @@ def request(url, headers, body=None):
 def normalize(item):
     status_map = {
         "upcoming": "scheduled",
+        "notstarted": "scheduled",
+        "scheduled": "scheduled",
         "live": "live",
         "finished": "finished",
         "cancelled": "cancelled",
