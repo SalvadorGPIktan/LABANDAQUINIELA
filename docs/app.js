@@ -832,13 +832,11 @@ function render() {
             new Date()
               .getFullYear()
           }
-          · Hecho para competir
-          entre amigos.
+          ·
         </span>
 
         <span>
-          El fútbol se disfruta
-          más juntos.
+          Arriba las chivas!!!
         </span>
       </footer>
     </main>
