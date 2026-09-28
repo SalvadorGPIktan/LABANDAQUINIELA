@@ -95,6 +95,27 @@ const colors = {
   'Atlante FC': '#163f79',
 };
 
+const teamLogos = {
+  'Club América': 'assets/logos/america.png',
+  'Atlante FC': 'assets/logos/atlante.png',
+  'Atlas FC': 'assets/logos/atlas.png',
+  'CD Guadalajara': 'assets/logos/chivas.png',
+  'Cruz Azul': 'assets/logos/cruz-azul.png',
+  'FC Juárez': 'assets/logos/juarez.png',
+  'Club León': 'assets/logos/leon.png',
+  'CF Monterrey': 'assets/logos/monterrey.png',
+  'Club Necaxa': 'assets/logos/necaxa.png',
+  'CF Pachuca': 'assets/logos/pachuca.png',
+  'Club Puebla': 'assets/logos/puebla.png',
+  'Pumas UNAM': 'assets/logos/pumas.png',
+  'Querétaro FC': 'assets/logos/queretaro.png',
+  'Atlético San Luis': 'assets/logos/san-luis.png',
+  'Santos Laguna': 'assets/logos/santos.png',
+  'Tigres UANL': 'assets/logos/tigres.png',
+  'Club Tijuana': 'assets/logos/tijuana.png',
+  'CD Toluca': 'assets/logos/toluca.png',
+};
+
 /* =========================================================
    TOAST
    ========================================================= */
