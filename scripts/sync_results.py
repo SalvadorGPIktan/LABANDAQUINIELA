@@ -16,7 +16,12 @@ def request(url, headers, body=None):
     )
 
     with urllib.request.urlopen(req, timeout=40) as response:
-        return json.load(response)
+        raw = response.read()
+
+        if not raw:
+            return None
+
+        return json.loads(raw.decode())
 
 
 def normalize(item):
@@ -32,8 +37,7 @@ def normalize(item):
 
     status = status_map.get(item.get("status"))
 
-    # BSD puede marcar unresolved cuando no puede confirmar qué pasó.
-    # No adivinamos ese caso.
+    # Si BSD devuelve un estado que no conocemos, no adivinamos.
     if status is None:
         return None
 
@@ -52,7 +56,11 @@ def normalize(item):
 
 
 def main():
-    supabase_url = os.environ["SUPABASE_URL"].rstrip("/") + "/rest/v1/"
+    supabase_url = (
+        os.environ["SUPABASE_URL"].rstrip("/")
+        + "/rest/v1/"
+    )
+
     supabase_key = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
     bsd_key = os.environ["BSD_API_KEY"]
 
@@ -76,6 +84,14 @@ def main():
         supabase_headers,
     )
 
+    if not matches:
+        print(
+            "0 encuentros sincronizados. "
+            "0 omitidos. "
+            "0 partidos pendientes consultados."
+        )
+        return
+
     updated = 0
     skipped = 0
 
@@ -86,6 +102,10 @@ def main():
             f"{BSD_BASE}/events/{provider_id}/",
             bsd_headers,
         )
+
+        if item is None:
+            skipped += 1
+            continue
 
         update = normalize(item)
 
