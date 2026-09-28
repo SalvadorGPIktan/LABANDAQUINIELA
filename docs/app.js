@@ -519,6 +519,23 @@ function matches() {
 }
 
 function badge(name) {
+  const logo = teamLogos[name];
+
+  if (logo) {
+    return `
+      <span
+        class="badge real-badge"
+        title="${e(name)}"
+      >
+        <img
+          src="${e(logo)}"
+          alt="Escudo de ${e(name)}"
+          loading="lazy"
+        >
+      </span>
+    `;
+  }
+
   return `
     <span
       class="badge"
@@ -526,6 +543,7 @@ function badge(name) {
         colors[name] ||
         '#526753'
       }"
+      title="${e(name)}"
     >
       ${e(
         name
