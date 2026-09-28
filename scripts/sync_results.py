@@ -17,7 +17,7 @@ def main():
     url=os.environ['SUPABASE_URL'].rstrip('/')+'/rest/v1/'
     key=os.environ['SUPABASE_SERVICE_ROLE_KEY']
     headers={'apikey':key,'Authorization':'Bearer '+key,'Content-Type':'application/json'}
-    matches=request(url+'matches?select=id,provider_id&provider_id=not.is.null&manual_override=eq.false',headers)
+    matches=request(url+'matches?select=id,provider_id&provider_id=not.is.null&manual_override=eq.false&status=in.(scheduled,live,postponed)',headers)
     mapped={m['provider_id']:m['id'] for m in matches}
     ids=list(mapped)
     count=0
